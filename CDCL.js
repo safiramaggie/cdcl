@@ -9,12 +9,58 @@ var height = $(document).height() - 140;
 var id = 0;
 
 function main() {
-	readTextFile("test.cnf");
-	// TODO
+	// Example from the script
+	readTextFile("test.cnf", true);
+
+	var ending = ".cnf";
+
+	var sat5_28 = "SAT-Formeln/SAT-Formeln/sat-5-28/sat-5-28-";
+	var sat5_28_size = 692;
+	var sat10_50 = "SAT-Formeln/SAT-Formeln/sat-10-50/sat10-50-";
+	var sat10_50_size = 485;
+	var unsat5_28 = "SAT-Formeln/SAT-Formeln/unsat-5-28/unsat-5-28-";
+	var unsat5_28_size = 309;
+	var unsat10_50 = "SAT-Formeln/SAT-Formeln/unsat-10-50/unsat10-50-";
+	var unsat10_50_size = 479;
+
+	// sat 5-28
+	for(var i=1; i<=sat5_28_size; i++) {
+		var fileName = sat5_28 + i + ending;
+		if(readTextFile(fileName, false) == 'Unerfuellbar') {
+			alert('Fehler in sat-5-28-Formel ' + i);
+		}
+	}
+	alert('SAT-5-28 abgeschlossen!');
+	// sat 10-50
+	/*for(var i=1; i<=sat10_50_size; i++) {
+		var fileName = sat10_50 + i + ending;
+		if(readTextFile(fileName, false) == 'Unerfuellbar') {
+			alert('Fehler in sat-10-50-Formel ' + i);
+		}
+	}
+	alert('SAT-10-50 abgeschlossen!');*/
+	// unsat 5-28
+	for(var i=1; i<=unsat5_28_size; i++) {
+		var fileName = unsat5_28 + i + ending;
+		if(readTextFile(fileName, false) == 'Erfuellbar') {
+			alert('Fehler in unsat-5-28-Formel ' + i);
+		}
+	}
+	alert('UNSAT-5-28 abgeschlossen!');
+	// unsat 10-50
+	/*for(var i=1; i<=unsat10_50_size; i++) {
+		var fileName = unsat10_50 + i + ending;
+		if(readTextFile(fileName, false) == 'Erfuellbar') {
+			alert('Fehler in unsat-10-50-Formel ' + i);
+		}
+	}
+	alert('UNSAT-10-50 abgeschlossen!');*/
+	alert('Alle Tests abgeschlossen.');
 }
 
-function readTextFile(file)
+function readTextFile(file, drawOutput)
 {
+		var res;
     var rawFile = new XMLHttpRequest();
     rawFile.open("GET", file, false);
 
@@ -40,13 +86,18 @@ function readTextFile(file)
 						clauses.push(split);
 					}
 				}
-				formulaField.innerText = drawFormula(clauses);
-				var res = CDCL(clauses, numberOfVariables);
-				resultField.innerText = res;
+				if(drawOutput) {
+					formulaField.innerText = drawFormula(clauses);
+				}
+				res = CDCL(clauses, numberOfVariables, drawOutput);
+				if(drawOutput) {
+					resultField.innerText = res;
+				}
 			}
 		}
 	}
-     rawFile.send(null);
+   rawFile.send(null);
+	 return res;
  }
 
 function drawGraph(nodeInfos, edgeInfos){
@@ -87,7 +138,7 @@ function drawAssignment(assignment) {
 	return text;
 }
 
-function CDCL (clauses, numberOfVariables) {
+function CDCL (clauses, numberOfVariables, drawOutput) {
 	var nodeInfos = {};
 	var edgeInfos = [];
 	var d = 0;
@@ -141,8 +192,10 @@ function CDCL (clauses, numberOfVariables) {
 					conflictClause.push('-'+nodeInfos[pred[p]].Variable);
 				}
 			}
-			drawGraph(nodeInfos, edgeInfos);
-			graphsField.innerHTML = graphsField.innerHTML + "\n\n<p>Gelernte Klausel: " + drawFormula([conflictClause]) + "</p>";
+			if(drawOutput) {
+				drawGraph(nodeInfos, edgeInfos);
+				graphsField.innerHTML = graphsField.innerHTML + "\n\n<p>Gelernte Klausel: " + drawFormula([conflictClause]) + "</p>";
+			}
 
 			// Zeile 11
 			var max = 0;
@@ -172,8 +225,10 @@ function CDCL (clauses, numberOfVariables) {
 	}
 
 	// Zeile 17
-	assignField.innerText = drawAssignment(assignment);
-	drawGraph(nodeInfos, edgeInfos);
+	if(drawOutput) {
+		assignField.innerText = drawAssignment(assignment);
+		drawGraph(nodeInfos, edgeInfos);
+	}
 	return 'Erfuellbar';
 }
 
