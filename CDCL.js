@@ -17,7 +17,7 @@ function readTextFile(file)
 {
     var rawFile = new XMLHttpRequest();
     rawFile.open("GET", file, false);
-    
+
     rawFile.onreadystatechange = function ()
     {
 
@@ -26,13 +26,13 @@ function readTextFile(file)
             if(rawFile.status === 200 || rawFile.status == 0)
             {
                 var allText = rawFile.responseText;
-                allText = allText.split("\n"); 
-                
+                allText = allText.split("\n");
+
                 var numberOfVariables = allText[1].split(" ")[2];
 
                 allText.splice(0,2);
-                
-                var clauses = []
+
+                var clauses = [];
                 for (var c=0; c<allText.length; c++) {
 					if(allText[c].length > 0) {
 						var split = allText[c].split(" ");
@@ -51,11 +51,11 @@ function readTextFile(file)
 
 function drawGraph(nodeInfos, edgeInfos){
 	id++
-	graphsField.innerHTML = graphsField.innerHTML + "\n\n<div id=\"canvas"+id+"\"></div>"
+	graphsField.innerHTML = graphsField.innerHTML + "\n\n<div id=\"canvas"+id+"\"></div>";
 	var graph = new Graph();
 	var nodes = Object.keys(nodeInfos);
 	for(var n = 0; n< nodes.length; n++) {
-		graph.addNode(nodes[n], { label : 'var ' + nodeInfos[nodes[n]].Variable + '= ' + nodeInfos[nodes[n]].assignment + '\n level= ' + nodeInfos[nodes[n]].mark })
+		graph.addNode(nodes[n], { label : 'var ' + nodeInfos[nodes[n]].Variable + '= ' + nodeInfos[nodes[n]].assignment + '\n level= ' + nodeInfos[nodes[n]].mark });
 	}
 	for(var e = 0; e < edgeInfos.length; e++) {
 		graph.addEdge(edgeInfos[e].from, edgeInfos[e].to, {directed: true});
@@ -82,11 +82,11 @@ function drawAssignment(assignment) {
 	var as = Object.keys(assignment);
 	var text = '';
 	for (var a = 0; a < as.length; a++) {
-		text = text + as[a] + '=' + assignment[as[a]]+'; '
+		text = text + as[a] + '=' + assignment[as[a]]+'; ';
 	}
 	return text;
 }
-	
+
 function CDCL (clauses, numberOfVariables) {
 	var nodeInfos = {};
 	var edgeInfos = [];
@@ -95,93 +95,111 @@ function CDCL (clauses, numberOfVariables) {
 	for (var v=1; v<=numberOfVariables; v++) {
 		assignment[v] = 2; //2 = not assigned
 	}
+
+	// Zeile 2
 	if (UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d) !== 'NOCONFLICT') {
 		return 'Unerfuellbar';
-	} else {
-		var unassigned = unassignedVarExists(assignment);
-		while (unassigned !== false) {
-			d++;
-			var random = Math.random();
-			if (random < 0.5){
-				assignment[unassigned] = 0;
-			} else {
-				assignment[unassigned] = 1;
-			}
-			nodeInfos[unassigned+'='+assignment[unassigned]] = {'Variable': unassigned, 'assignment': assignment[unassigned], 'mark': d};
-			var conflictLiteral = UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d);
-			while (conflictLiteral !== 'NOCONFLICT') {
-				var firstUIP = findFirstUIP(edgeInfos, conflictLiteral);
-				var succ = successors(edgeInfos, firstUIP);
-				var pred = []
-				for (var s=0; s<= succ.length; s++) {
-					var pr = predecessors(edgeInfos,succ[s]);
-					for(var p=0; p<pr.length; p++) {
-						if(!pred.includes(pr[p])) {
-							pred.push(pr[p]);
-						}
-					}
-				}
-				var conflictClause = []
-				for( var p=0; p<pred.length; p++) {
-					var assign = nodeInfos[pred[p]].assignment;
-					if(assign == 0) {
-						conflictClause.push(nodeInfos[pred[p]].Variable)
-					} else {
-						conflictClause.push('-'+nodeInfos[pred[p]].Variable)
-					}
-				}
-				drawGraph(nodeInfos, edgeInfos)
-				graphsField.innerHTML = graphsField.innerHTML + "\n\n<p>Gelernte Klausel: " + drawFormula([conflictClause]) + "</p>";
-				
-				var max = 0;
-				for (var p=0; p<pred.length; p++) {
-					if(nodeInfos[pred[p]].mark > max) {
-						max = nodeInfos[pred[p]].mark
-					}
-				}
-				if(max == 0) {
-					return 'Unerfuellbar';
-				} else {				
-					var nodes = Object.keys(nodeInfos);
-					for(var n = 0; n < nodes.length; n++) {
-						if(nodeInfos[nodes[n]].mark >= max){							
-							deleteNode(nodeInfos, edgeInfos, assignment, nodes[n]);
-						}
-					}
-					clauses.push(conflictClause);
-					d--;
-				}
-				conflictLiteral = UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d);
-			}		
-			unassigned = unassignedVarExists(assignment);
-		}
-		
-		assignField.innerText = drawAssignment(assignment);
-		drawGraph(nodeInfos, edgeInfos);
-		return 'Erfuellbar';	
 	}
+
+	// Zeile else
+	var unassigned = unassignedVarExists(assignment);
+	// Zeile 4
+	while (unassigned !== false) {
+		//Zeile 5
+		d++;
+		// Zeile 6
+		var random = Math.random();
+		if (random < 0.5){
+			assignment[unassigned] = 0;
+		} else {
+			assignment[unassigned] = 1;
+		}
+		// Zeile 7
+		nodeInfos[unassigned+'='+assignment[unassigned]] = {'Variable': unassigned, 'assignment': assignment[unassigned], 'mark': d};
+
+		// Zeile 8
+		var conflictLiteral = UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d);
+		while (conflictLiteral !== 'NOCONFLICT') {
+			//Zeile 9-10
+			var firstUIP = findFirstUIP(edgeInfos, conflictLiteral);
+			var succ = successors(edgeInfos, firstUIP);
+			var pred = [];
+			for (var s=0; s<= succ.length; s++) {
+				var pr = predecessors(edgeInfos,succ[s]);
+				for(var p=0; p<pr.length; p++) {
+					if(!pred.includes(pr[p])) {
+						pred.push(pr[p]);
+					}
+				}
+			}
+			var conflictClause = [];
+			for( var p=0; p<pred.length; p++) {
+				var assign = nodeInfos[pred[p]].assignment;
+				if(assign == 0) {
+					conflictClause.push(nodeInfos[pred[p]].Variable);
+				} else {
+					conflictClause.push('-'+nodeInfos[pred[p]].Variable);
+				}
+			}
+			drawGraph(nodeInfos, edgeInfos);
+			graphsField.innerHTML = graphsField.innerHTML + "\n\n<p>Gelernte Klausel: " + drawFormula([conflictClause]) + "</p>";
+
+			// Zeile 11
+			var max = 0;
+			for (var p=0; p<pred.length; p++) {
+				if(nodeInfos[pred[p]].mark > max) {
+					max = nodeInfos[pred[p]].mark;
+				}
+			}
+			// Zeile 12
+			if(max == 0) {
+				return 'Unerfuellbar';
+			} else { // Zeile 13
+				var nodes = Object.keys(nodeInfos);
+				// Zeile 14
+				for(var n = 0; n < nodes.length; n++) {
+					if(nodeInfos[nodes[n]].mark >= max){
+						deleteNode(nodeInfos, edgeInfos, assignment, nodes[n]);
+					}
+				}
+				// Zeile 15
+				clauses.push(conflictClause);
+				d--;
+			}
+			conflictLiteral = UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d);
+		}
+		unassigned = unassignedVarExists(assignment);
+	}
+
+	// Zeile 17
+	assignField.innerText = drawAssignment(assignment);
+	drawGraph(nodeInfos, edgeInfos);
+	return 'Erfuellbar';
 }
 
 function UnitPropagation (clauses, assignment, nodeInfos, edgeInfos, level) {
 	var index = unitclauseExists(clauses, assignment);
-	
+
+	// Zeile 1
 	while(index !== false) {
-		
+		// Zeile 2
 		var K = clauses[index[0]][index[1]];
+		// Zeile 3
 		var a;
 		if(K.startsWith('-')) {
 			a = 0;
 		} else {
 			a = 1;
 		}
-		
+
+		// Zeile 4
 		var k = getVariable(K);
-		
 		assignment[k] = a;
-		
+
+		// Zeile 5-8
 		nodeInfos[k+'='+a] = {'Variable': k, 'assignment': a, 'mark': level};
-		K = clauses[index[0]]
-		for (var l=0; l<K.length; l++) {	
+		K = clauses[index[0]];
+		for (var l=0; l<K.length; l++) {
 			if (l==index[1]) { //falls es der neue Knoten ist
 				continue;
 			} else {
@@ -189,11 +207,11 @@ function UnitPropagation (clauses, assignment, nodeInfos, edgeInfos, level) {
 			}
 		}
 		var clauseUnfullfilled = formulaUnfulfilled(clauses, assignment);
-		if (clauseUnfullfilled !== false){
+		if (clauseUnfullfilled !== false) {
 			nodeInfos[k+'='+neg(a)] = {'Variable': k, 'assignment': neg(a), 'mark': level};
 			for (var l=0; l<clauses[clauseUnfullfilled].length; l++) {
 				if (k!==getVariable(clauses[clauseUnfullfilled][l])) {
-					edgeInfos.push({'from': getVariable(clauses[clauseUnfullfilled][l])+"="+assignment[getVariable(clauses[clauseUnfullfilled][l])],'to': k+"="+neg(a)});				
+					edgeInfos.push({'from': getVariable(clauses[clauseUnfullfilled][l])+"="+assignment[getVariable(clauses[clauseUnfullfilled][l])],'to': k+"="+neg(a)});
 				}
 			}
 			return [k+'='+a, k+'='+neg(a)];
@@ -207,12 +225,12 @@ function deleteNode(nodeInfos, edgeInfos, assignment, node) {
 	//delete assignment
 	assignment[nodeInfos[node].Variable] = 2;
 	//delete node
-	delete nodeInfos[node]
+	delete nodeInfos[node];
 	//delete edges
 	for(var e=0; e<edgeInfos.length; e++){
 		if(edgeInfos[e].from == node || edgeInfos[e].to == node) {
 			edgeInfos.splice(e, 1);
-			
+
 		}
 	}
 }
@@ -220,7 +238,7 @@ function deleteNode(nodeInfos, edgeInfos, assignment, node) {
 function findFirstUIP(edgeInfos, conflictLiteral) {
 	var predecessors1 = depthFirstSearch(edgeInfos, conflictLiteral[0]);
 	var predecessors2 = depthFirstSearch(edgeInfos, conflictLiteral[1]);
-	var UIPs = []
+	var UIPs = [];
 	for (var p = 0; p < predecessors1.length; p++) {
 		if(predecessors2.includes(predecessors1[p])) {
 			UIPs.push(predecessors1[p]);
@@ -235,14 +253,14 @@ function findFirstUIP(edgeInfos, conflictLiteral) {
 			}
 		}
 		if(isFirstUIP) {
-			return UIPs[u]; 
+			return UIPs[u];
 		}
 	}
 	return "error";
 }
 
 function successors(edgeInfos, node) {
-	var succ = []
+	var succ = [];
 	for(var edge = 0; edge < edgeInfos.length; edge++) {
 		if(edgeInfos[edge].from == node) {
 			succ.push(edgeInfos[edge].to);
@@ -252,7 +270,7 @@ function successors(edgeInfos, node) {
 }
 
 function predecessors(edgeInfos, node) {
-	var pred = []
+	var pred = [];
 	for(var edge = 0; edge < edgeInfos.length; edge++) {
 		if(edgeInfos[edge].to == node) {
 			pred.push(edgeInfos[edge].from);
@@ -262,10 +280,10 @@ function predecessors(edgeInfos, node) {
 }
 
 function depthFirstSearch(edgeInfos, conflictLiteral) {
-	var result = []
-	var stack = [conflictLiteral]
+	var result = [];
+	var stack = [conflictLiteral];
 	while(stack.length !== 0) {
-		var element = stack[stack.length-1];		
+		var element = stack[stack.length-1];
 		stack.splice(stack.length-1,1);
 		result.push(element);
 		for(var edge = 0; edge < edgeInfos.length; edge++) {
@@ -288,7 +306,7 @@ function unassignedVarExists(assignment) {
 }
 
 function unitclauseExists (clauses, assignment) {
-	for (var c=0; c<clauses.length; c++) {		
+	for (var c=0; c<clauses.length; c++) {
 		var number = 0;
 		var index;
 		var fals = true;
@@ -309,10 +327,10 @@ function unitclauseExists (clauses, assignment) {
 }
 
 function formulaUnfulfilled(clauses, assignment) {
-	for (var c=0; c<clauses.length; c++) {		
+	for (var c=0; c<clauses.length; c++) {
 		var fals = true;
 		for (var l=0; l<clauses[c].length; l++) {
-			if(assignment[getVariable(clauses[c][l])] == 2) {	
+			if(assignment[getVariable(clauses[c][l])] == 2) {
 				fals = false;
 			} else if ((assignment[getVariable(clauses[c][l])] == 1 && !clauses[c][l].startsWith('-')) || (assignment[getVariable(clauses[c][l])] == 0 && clauses[c][l].startsWith('-'))) {
 				fals = false;
@@ -344,4 +362,3 @@ function neg(value) {
 main();
 
 };
-
