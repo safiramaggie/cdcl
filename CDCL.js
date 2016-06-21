@@ -32,13 +32,13 @@ function main() {
 	}
 	alert('SAT-5-28 abgeschlossen!');
 	// sat 10-50
-	/*for(var i=1; i<=sat10_50_size; i++) {
+	for(var i=1; i<=sat10_50_size; i++) {
 		var fileName = sat10_50 + i + ending;
 		if(readTextFile(fileName, false) == 'Unerfuellbar') {
 			alert('Fehler in sat-10-50-Formel ' + i);
 		}
 	}
-	alert('SAT-10-50 abgeschlossen!');*/
+	alert('SAT-10-50 abgeschlossen!');
 	// unsat 5-28
 	for(var i=1; i<=unsat5_28_size; i++) {
 		var fileName = unsat5_28 + i + ending;
@@ -48,13 +48,13 @@ function main() {
 	}
 	alert('UNSAT-5-28 abgeschlossen!');
 	// unsat 10-50
-	/*for(var i=1; i<=unsat10_50_size; i++) {
+	for(var i=1; i<=unsat10_50_size; i++) {
 		var fileName = unsat10_50 + i + ending;
 		if(readTextFile(fileName, false) == 'Erfuellbar') {
 			alert('Fehler in unsat-10-50-Formel ' + i);
 		}
 	}
-	alert('UNSAT-10-50 abgeschlossen!');*/
+	alert('UNSAT-10-50 abgeschlossen!');
 	alert('Alle Tests abgeschlossen.');
 }
 
@@ -172,14 +172,31 @@ function CDCL (clauses, numberOfVariables, drawOutput) {
 		var conflictLiteral = UnitPropagation(clauses, assignment, nodeInfos, edgeInfos, d);
 		while (conflictLiteral !== 'NOCONFLICT') {
 			//Zeile 9-10
-			var firstUIP = findFirstUIP(edgeInfos, conflictLiteral);
-			var succ = successors(edgeInfos, firstUIP);
-			var pred = [];
+			
+			/*var firstUIPs = findFirstUIPs(edgeInfos, conflictLiteral);
+			var succ = []
+			for (var u = 0; u < firstUIPs.length; u++) {			
+				var su = successors(edgeInfos, firstUIPs[u]);
+				for (var s = 0; s < su.length; s++) {
+					if (!succ.includes(su[s])) {
+						succ.push(su[s]);
+					}
+				}
+			}
+			var pred = []
 			for (var s=0; s<= succ.length; s++) {
 				var pr = predecessors(edgeInfos,succ[s]);
 				for(var p=0; p<pr.length; p++) {
-					if(!pred.includes(pr[p])) {
+					if(!pred.includes(pr[p]) && !succ.includes(pr[p])) {
 						pred.push(pr[p]);
+					}
+				}
+			}*/
+			var pred = []
+			for (var e = 0; e < edgeInfos.length; e++) {
+				if(edgeInfos[e].to == conflictLiteral[0] || edgeInfos[e].to == conflictLiteral[1]) {
+					if(!pred.includes(edgeInfos[e].from)){					
+						pred.push(edgeInfos[e].from);
 					}
 				}
 			}
@@ -290,28 +307,35 @@ function deleteNode(nodeInfos, edgeInfos, assignment, node) {
 	}
 }
 
-function findFirstUIP(edgeInfos, conflictLiteral) {
+function findFirstUIPs(edgeInfos, conflictLiteral) {
 	var predecessors1 = depthFirstSearch(edgeInfos, conflictLiteral[0]);
 	var predecessors2 = depthFirstSearch(edgeInfos, conflictLiteral[1]);
-	var UIPs = [];
-	for (var p = 0; p < predecessors1.length; p++) {
-		if(predecessors2.includes(predecessors1[p])) {
-			UIPs.push(predecessors1[p]);
-		}
-	}
+	var UIPs = intersection(predecessors1, predecessors2)
+	var firstUIPs = []
+	
 	for (var u = 0; u<UIPs.length; u++) {
 		var succ = successors(edgeInfos, UIPs[u]);
-		var isFirstUIP = true;
+		var isFirstUIP = false;
 		for(var s=0; s< succ.length; s++) {
-			if(UIPs.includes(succ[s])) {
-				isFirstUIP = false;
+			if(!UIPs.includes(succ[s])) {
+				isFirstUIP = true;
 			}
 		}
 		if(isFirstUIP) {
-			return UIPs[u];
+			firstUIPs.push(UIPs[u])
 		}
 	}
-	return "error";
+	return firstUIPs;
+}
+
+function intersection (a , b) {
+	var result = []
+	for (var p = 0; p < a.length; p++) {
+		if(b.includes(a[p])) {
+			result.push(a[p]);
+		}
+	}
+	return result
 }
 
 function successors(edgeInfos, node) {
